@@ -3,160 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recibos - Soporte Global</title>
+    <title>Recibos PRO - Soporte Global</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #1a3a5a; --accent: #d32f2f; --success: #25d366; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--primary); }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header img { max-width: 150px; margin-bottom: 10px; }
-        .folio-box { background: #fff5f5; color: var(--accent); padding: 5px 15px; border-radius: 20px; font-weight: bold; display: inline-block; border: 1px solid var(--accent); margin-bottom: 15px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; transition: border 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; }
-        .amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .saldo-total { grid-column: span 2; background: #f1f3f5; }
-        .btn-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; }
-        button { padding: 14px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: transform 0.1s, opacity 0.2s; }
-        button:active { transform: scale(0.98); }
-        .btn-carta { background: var(--primary); grid-column: span 2; }
+        :root { --primary: #1a3a5a; --accent: #d32f2f; --success: #25d366; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-top: 6px solid var(--primary); }
+        .header { text-align: center; margin-bottom: 15px; }
+        .folio-box { background: #fff5f5; color: var(--accent); padding: 8px; border-radius: 8px; font-weight: bold; border: 1px solid var(--accent); margin-bottom: 10px; font-size: 0.9rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
+        label { display: block; font-size: 0.75rem; color: #444; font-weight: bold; margin-bottom: 3px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
+        .money-input { display: flex; gap: 5px; }
+        .money-input select { width: 60px; background: #eee; }
+        .saldo-box { background: #fff9db; border: 1px solid #fab005; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        button { padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-pdf { background: var(--primary); grid-column: span 2; font-size: 1rem; }
         .btn-80mm { background: #495057; }
         .btn-wa { background: var(--success); }
-        
-        /* Estilos de Impresión Térmica 80mm */
-        @media print {
-            body * { visibility: hidden; }
-            #ticket, #ticket * { visibility: visible; }
-            #ticket { position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; font-family: 'Courier New', Courier, monospace; }
-            .no-print { display: none; }
-        }
+        .fecha-hora { font-size: 0.8rem; color: #777; margin-bottom: 10px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="card no-print">
+<div class="card">
     <div class="header">
-        <div class="folio-box">FOLIO: SG-<span id="lbl-folio">527</span></div>
-        <h2 style="margin:0; color:var(--primary);">Recibo de Caja</h2>
-        <p style="font-size:0.8rem; color:#888;">Soporte Global Redes y Pc's</p>
+        <div class="folio-box" id="folio-display">CARGANDO FOLIO...</div>
+        <h2 style="margin:0; color:var(--primary);">Soporte Global</h2>
+        <div class="fecha-hora" id="live-clock"></div>
     </div>
 
-    <div class="input-group">
-        <label>CLIENTE</label>
-        <input type="text" id="cliente" placeholder="Nombre o Razón Social">
-    </div>
-    
-    <div class="input-group">
-        <label>CONCEPTO DEL PAGO</label>
-        <input type="text" id="concepto" placeholder="Ej: Pago parcial cámaras IP">
-    </div>
-
-    <div class="amounts">
-        <div class="input-group">
-            <label>TOTAL SERVICIO</label>
-            <input type="number" id="total" value="0" oninput="recalcular()">
+    <div class="grid">
+        <div class="full">
+            <label>Nombre del Cliente</label>
+            <input type="text" id="cliente" placeholder="Nombre completo">
         </div>
-        <div class="input-group">
-            <label>ABONO / PAGO</label>
-            <input type="number" id="abono" value="0" oninput="recalcular()">
+        <div>
+            <label>Cédula / ID</label>
+            <input type="text" id="cedula" placeholder="Nro de identificación">
         </div>
-        <div class="input-group saldo-total">
-            <label>SALDO PENDIENTE</label>
-            <input type="text" id="saldo" value="0.00" disabled style="color:var(--accent); font-weight:bold;">
+        <div>
+            <label>Teléfono (WhatsApp)</label>
+            <input type="tel" id="telefono" placeholder="Ej: 50688888888">
+        </div>
+        <div class="full">
+            <label>Concepto del Pago</label>
+            <input type="text" id="concepto" placeholder="Reparación, abono, etc.">
+        </div>
+        
+        <div class="full">
+            <label>Total Servicio</label>
+            <div class="money-input">
+                <select id="m1"><option>¢</option><option>$</option></select>
+                <input type="number" id="total" value="0" oninput="recalcular()">
+            </div>
+        </div>
+        <div class="full">
+            <label>Monto a Pagar Hoy</label>
+            <div class="money-input">
+                <select id="m2"><option>¢</option><option>$</option></select>
+                <input type="number" id="abono" value="0" oninput="recalcular()">
+            </div>
         </div>
     </div>
 
-    <div class="btn-container">
-        <button class="btn-carta" onclick="generarCarta()">Descargar PDF Carta</button>
-        <button class="btn-80mm" onclick="imprimirTicket()">Ticket 80mm</button>
-        <button class="btn-wa" onclick="enviarWhatsApp()">Enviar WhatsApp</button>
+    <div class="saldo-box">
+        <label>Saldo Pendiente</label>
+        <span id="moneda-saldo">¢</span> <strong id="val-saldo" style="font-size:1.2rem;">0.00</strong>
     </div>
-</div>
 
-<div id="ticket" style="display:none;">
-    <center>
-        <h3>SOPORTE GLOBAL</h3>
-        <p>REDES Y PC'S</p>
-        <p>-------------------------</p>
-        <p>RECIBO: SG-<span id="t-folio">527</span></p>
-    </center>
-    <p>FECHA: <span id="t-fecha"></span></p>
-    <p>CLIENTE: <span id="t-cliente"></span></p>
-    <p>CONCEPTO: <span id="t-concepto"></span></p>
-    <p>-------------------------</p>
-    <p>TOTAL: $<span id="t-total"></span></p>
-    <p>ABONO: $<span id="t-abono"></span></p>
-    <p><strong>SALDO: $<span id="t-saldo"></span></strong></p>
-    <br>
-    <center><p>GRACIAS POR SU CONFIANZA</p></center>
+    <div class="btn-group">
+        <button class="btn-pdf" onclick="generarPDF()">DESCARGAR RECIBO PDF</button>
+        <button class="btn-80mm" onclick="window.print()">TICKET 80MM</button>
+        <button class="btn-wa" onclick="enviarWA()">ENVIAR POR WHATSAPP</button>
+    </div>
 </div>
 
 <script>
-    let folioActual = 527;
+    let consecutivo = 527;
+    
+    function actualizarReloj() {
+        const ahora = new Date();
+        const opciones = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        document.getElementById('live-clock').innerText = ahora.toLocaleDateString('es-ES', opciones);
+        
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const anio = ahora.getFullYear();
+        document.getElementById('folio-display').innerText = `FOLIO: SG-${anio}-${mes}-${consecutivo}`;
+    }
+    setInterval(actualizarReloj, 1000);
+    actualizarReloj();
 
     function recalcular() {
-        const total = parseFloat(document.getElementById('total').value) || 0;
-        const abono = parseFloat(document.getElementById('abono').value) || 0;
-        document.getElementById('saldo').value = (total - abono).toFixed(2);
+        const t = parseFloat(document.getElementById('total').value) || 0;
+        const a = parseFloat(document.getElementById('abono').value) || 0;
+        const moneda = document.getElementById('m1').value;
+        document.getElementById('m2').value = moneda;
+        document.getElementById('moneda-saldo').innerText = moneda;
+        document.getElementById('val-saldo').innerText = (t - a).toFixed(2);
     }
 
-    function actualizarFolioUI() {
-        document.getElementById('lbl-folio').innerText = folioActual;
-        document.getElementById('t-folio').innerText = folioActual;
-    }
-
-    function generarCarta() {
+    function generarPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const cli = document.getElementById('cliente').value || "Cliente General";
-        const con = document.getElementById('concepto').value || "Servicios Técnicos";
-        const tot = document.getElementById('total').value;
-        const abo = document.getElementById('abono').value;
-        const sal = document.getElementById('saldo').value;
+        const ahora = document.getElementById('live-clock').innerText;
+        const folio = document.getElementById('folio-display').innerText;
+        const m = document.getElementById('m1').value;
 
-        doc.setFontSize(20);
-        doc.text("SOPORTE GLOBAL REDES Y PC'S", 20, 30);
+        doc.setFont("helvetica", "bold");
+        doc.text("SOPORTE GLOBAL REDES Y PC'S", 20, 20);
         doc.setFontSize(10);
-        doc.text(`NRO RECIBO: SG-${folioActual}`, 160, 30);
-        doc.line(20, 35, 190, 35);
-        
-        doc.text(`FECHA: ${new Date().toLocaleDateString()}`, 20, 45);
-        doc.text(`CLIENTE: ${cli.toUpperCase()}`, 20, 55);
-        doc.text(`CONCEPTO: ${con}`, 20, 65);
-        
-        doc.rect(20, 75, 170, 30);
-        doc.text(`TOTAL DEL SERVICIO: $${tot}`, 25, 85);
-        doc.text(`MONTO PAGADO: $${abo}`, 25, 92);
-        doc.setFont(undefined, 'bold');
-        doc.text(`SALDO RESTANTE: $${sal}`, 25, 100);
+        doc.text(folio, 140, 20);
+        doc.text(`Fecha/Hora: ${ahora}`, 20, 30);
+        doc.line(20, 32, 190, 32);
 
-        doc.save(`Recibo_SG_${folioActual}.pdf`);
-        folioActual++;
-        actualizarFolioUI();
+        doc.setFont("helvetica", "normal");
+        doc.text(`CLIENTE: ${document.getElementById('cliente').value}`, 20, 45);
+        doc.text(`ID/CÉDULA: ${document.getElementById('cedula').value}`, 20, 52);
+        doc.text(`CONCEPTO: ${document.getElementById('concepto').value}`, 20, 62);
+
+        doc.setFont("helvetica", "bold");
+        doc.text(`TOTAL SERVICIO:   ${m} ${document.getElementById('total').value}`, 20, 80);
+        doc.text(`MONTO ABONADO:    ${m} ${document.getElementById('abono').value}`, 20, 88);
+        doc.setTextColor(211, 47, 47);
+        doc.text(`SALDO PENDIENTE:  ${m} ${document.getElementById('val-saldo').innerText}`, 20, 98);
+
+        doc.save(`Recibo_${folio}.pdf`);
+        consecutivo++;
     }
 
-    function imprimirTicket() {
-        document.getElementById('t-fecha').innerText = new Date().toLocaleDateString();
-        document.getElementById('t-cliente').innerText = document.getElementById('cliente').value;
-        document.getElementById('t-concepto').innerText = document.getElementById('concepto').value;
-        document.getElementById('t-total').innerText = document.getElementById('total').value;
-        document.getElementById('t-abono').innerText = document.getElementById('abono').value;
-        document.getElementById('t-saldo').innerText = document.getElementById('saldo').value;
-        
-        window.print();
-        folioActual++;
-        actualizarFolioUI();
-    }
-
-    function enviarWhatsApp() {
+    function enviarWA() {
+        const tel = document.getElementById('telefono').value;
+        const folio = document.getElementById('folio-display').innerText;
         const cli = document.getElementById('cliente').value;
+        const m = document.getElementById('m1').value;
         const abo = document.getElementById('abono').value;
-        const sal = document.getElementById('saldo').value;
-        const msg = `Soporte Global: Hola ${cli}, recibimos su pago de $${abo}. Su saldo pendiente es $${sal}. Recibo SG-${folioActual}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        const sal = document.getElementById('val-saldo').innerText;
+
+        if(!tel) { alert("Ingrese un teléfono"); return; }
+
+        const msg = `*SOPORTE GLOBAL REDES Y PC'S*\n✅ Recibo: ${folio}\n👤 Cliente: ${cli}\n💰 Pago: ${m}${abo}\n📉 Saldo: ${m}${sal}\n\n_Le hemos enviado su PDF adjunto._`;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 </script>
+
 </body>
 </html>
